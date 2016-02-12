@@ -90,12 +90,28 @@ public class GenerationTest1 {
 				
 				//forth we update the location based on velocity
 				r.location = r.location.plus(r.velocity);
-				
 			}
 			
+			//Collision Check
 			
-			
-			//fourth we combine colliding proto resources
+			//fourth we check resources to make sure they're not out of bounds, if they are, we move them
+			//back into bounds and reverse the correct element of velocity to make them bounce.
+			for(ProtoResource r : resources){
+				if(r.location.x > panel.getWidth()){ //off right bounds
+					r.location.x = panel.getWidth() - 1; //move back in bounds
+					r.velocity.x = -r.velocity.x; //bounce the velocity
+				}else if(r.location.x < 0){ //Off left bounds
+					r.location.x = 1;
+					r.velocity.x = -r.velocity.x;
+				}else if(r.location.y > panel.getHeight()){//Off Bottom of Screen
+					r.location.y = panel.getHeight() - 1;
+					r.velocity.y = - r.velocity.y;
+				}else if(r.location.y < 0){//Off top of screen
+					r.location.y = 1;
+					r.velocity.y = -r.velocity.y;
+				}
+				System.out.println(r.velocity);	
+			}
 			
 			//fifth we draw the frame
 			frame.repaint();
