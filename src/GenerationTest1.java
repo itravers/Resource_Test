@@ -46,9 +46,9 @@ public class GenerationTest1 {
 	
 	
 	//Constants
-	private double g = 1.1; // The Acceleration of Gravity
-	private int NUM_PROTO = 50000;
-	private double MASS_SIZE_RATIO = 5;
+	private double g = .5f; // The Acceleration of Gravity
+	private int NUM_PROTO = 1000;
+	private double MASS_SIZE_RATIO = 4;
 	private double MASS_THRESHOLD = NUM_PROTO / 20;
 	
 	GenerationTest1(){
@@ -70,16 +70,17 @@ public class GenerationTest1 {
 			elapsedTime = currentTime - startTime;
 			startTime = currentTime;
 			//first we will see if we should add another resource from the pool
-			if(resourcePool > 0){
+			if(resourcePool > 1){
 				resources.add(new ProtoResource(random.nextDouble()*frame.getWidth(), random.nextDouble()*frame.getHeight(), 1));
-				resourcePool--;
+				resources.add(new ProtoResource(random.nextDouble()*frame.getWidth(), random.nextDouble()*frame.getHeight(), 1));
+				resourcePool = resourcePool - 2;
 			}
 			
 			//second we apply gravity to the velocity of each proto resource O(x^2)
 			for(ProtoResource r : resources){
 				Vector2D force = new Vector2D(0, 0);
 				for(ProtoResource r2 : resources){
-					if(r != r2){ //we don't apply gravity for ourself
+					if(r != r2 && r.location.distance(r2.location) < panel.getWidth()/10){ //we don't apply gravity for ourself
 						double mass1 = r.mass;
 						double mass2 = r2.mass;
 						double distanceSQ = r.location.distanceSq(r2.location);
@@ -90,18 +91,22 @@ public class GenerationTest1 {
 						preforce = preforce.scalarMult((1/distanceSQ));
 						force = force.plus(preforce);
 					}
-				}
+				}//F=MA or F/M = A
 				
 				//calculate the new acceleration based on force
 				Vector2D accel = force.scalarMult(1/r.mass);
+				
+				while(accel.length() > 5){
+					accel = accel.scalarMult(.9f);
+				}
 				
 				//third we update the velocity of each proto resource based on acceleration
 				//we limit it
 				
 				//r.velocity = r.velocity.scalarMult(elapsedTime/1000 / .9f);
 				r.velocity = r.velocity.plus(accel);
-				if(r.velocity.length() > 5){
-					r.velocity = r.velocity.scalarMult(.5f);
+				while(r.velocity.length() > 2.5){
+					r.velocity = r.velocity.scalarMult(.9f);
 				}
 				
 				
@@ -310,10 +315,10 @@ public class GenerationTest1 {
 		boolean remove;
 		Vector2D location;
 		Vector2D velocity;
-		int mass;
+		double mass;
 		double radius;
 		
-		public ProtoResource(double x, double y, int mass){
+		public ProtoResource(double x, double y, double mass){
 			remove = false;
 			location = new Vector2D(x, y);
 			velocity = new Vector2D(0, 0);
