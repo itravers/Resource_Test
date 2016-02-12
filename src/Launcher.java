@@ -13,7 +13,7 @@ public class Launcher {
 	 * This will be a basic animated swing application. 
 	 */
 	private static void generationTest1(){
-		
+		GenerationTest1 generationTest1 = new GenerationTest1();
 		
 	}
 

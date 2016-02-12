@@ -1,3 +1,10 @@
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.Vector;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -18,13 +25,127 @@ import javax.swing.JPanel;
  * 8. The process continues
  */
 public class GenerationTest1 {
-	JFrame frame;
-	GamePanel panel = new GamePanel();
+	/* Field Variables */
+	
+	//Graphics varibales
+	private JFrame frame;
+	private GamePanel panel;
+	
+	//Game Pieces
+	int resourcePool;
+	ArrayList<ProtoResource> resources;
+	boolean inGame;
+	
 	GenerationTest1(){
-		frame = new JFrame();
+		setupGraphics();
+		setupResources();
+		//test first resource
+		resources.add(new ProtoResource( 10, 10, 2));
+		inGame = true;
+		gameLoop();
+	}
+	
+	private void gameLoop(){
+		//java swing will automaticall take care of drawing, we only have to
+		//worry about location, mass, and velocity calucations here
+		while(inGame){
+			//first we will see if we should add another resource from the pool
+			
+			//second we apply gravity to the velocity of each proto resource
+			
+			//third we update the location of each proto resource
+			
+			//fourth we combine colliding proto resources
+			
+			//let the gameloop pause for a moment before repeated
+		}
+	}
+	
+	private void setupResources(){
+		resourcePool = 1000;
+		resources = new ArrayList<ProtoResource>();
+	}
+	
+	private void setupGraphics(){
+		frame = new JFrame("GenrationTest1");
+		panel = new GamePanel();
+		
+		frame.setSize(800,  600);
+		frame.setVisible(true);
+		frame.setLocation(50, 50);
+		frame.add(panel);
+		System.out.println("added");
 	}
 	
 	private class GamePanel extends JPanel{
+		public GamePanel(){
+			setPreferredSize(new Dimension(800, 600));
+		}
 		
+		@Override
+		public void paintComponent(Graphics g){
+			g.setColor(Color.BLACK);
+			g.fillRect(0, 0, this.getWidth(), this.getHeight()); //draw a blank slate
+			drawProtoResources((Graphics2D)g);
+		}
+		
+		/**
+		 * Loop through the list of proto resources and draw something in it's location
+		 * corresponding to its mass;
+		 * @param g
+		 */
+		private void drawProtoResources(Graphics2D g){
+			g.setColor(Color.white);
+			for(ProtoResource r : resources){
+				r.draw(g);
+			}
+			
+		}
+	}
+	
+	/**
+	 * Proto Resources have a location, velocity and a mass. It's velocity is effected by gravity
+	 * @author Isaac Assegai
+	 *
+	 */
+	private class ProtoResource{
+		Vector2D location;
+		Vector2D velocity;
+		int mass;
+		
+		public ProtoResource(double x, double y, int mass){
+			location = new Vector2D(x, y);
+			velocity = new Vector2D(0, 0);
+			this.mass = mass;
+			
+		}
+		
+		public void draw(Graphics2D g){
+			g.fillOval((int)location.x, (int)location.y, mass*2, mass*2);
+		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
