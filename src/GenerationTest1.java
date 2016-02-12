@@ -8,6 +8,7 @@ import java.util.Vector;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
@@ -45,9 +46,9 @@ public class GenerationTest1 {
 	
 	
 	//Constants
-	private double g = 20; // The Acceleration of Gravity
-	private int NUM_PROTO = 100;
-	private double MASS_SIZE_RATIO = 2;
+	private double g = 1.1; // The Acceleration of Gravity
+	private int NUM_PROTO = 50000;
+	private double MASS_SIZE_RATIO = 5;
 	private double MASS_THRESHOLD = NUM_PROTO / 20;
 	
 	GenerationTest1(){
@@ -114,14 +115,14 @@ public class GenerationTest1 {
 			//fifth we check resources to make sure they're not out of bounds, if they are, we move them
 			//back into bounds and reverse the correct element of velocity to make them bounce.
 			for(ProtoResource r : resources){
-				if(r.location.x + r.mass*MASS_SIZE_RATIO > panel.getWidth()){ //off right bounds
-					r.location.x = panel.getWidth() -r.mass*MASS_SIZE_RATIO - 1; //move back in bounds
+				if(r.location.x + r.radius > panel.getWidth()){ //off right bounds
+					r.location.x = panel.getWidth() -r.radius - 1; //move back in bounds
 					r.velocity.x = -r.velocity.x; //bounce the velocity
 				}else if(r.location.x < 0){ //Off left bounds
 					r.location.x = 1;
 					r.velocity.x = -r.velocity.x;
-				}else if(r.location.y + r.mass*MASS_SIZE_RATIO > panel.getHeight()){//Off Bottom of Screen
-					r.location.y = panel.getHeight() - r.mass*MASS_SIZE_RATIO - 1;
+				}else if(r.location.y + r.radius > panel.getHeight()){//Off Bottom of Screen
+					r.location.y = panel.getHeight() - r.radius - 1;
 					r.velocity.y = - r.velocity.y;
 				}else if(r.location.y < 0){//Off top of screen
 					r.location.y = 1;
@@ -145,6 +146,11 @@ public class GenerationTest1 {
 						}
 					}
 				}
+				
+				//update radius based on mass as a volume
+				r.radius = Math.sqrt(r.mass/Math.PI) * MASS_SIZE_RATIO;
+				
+				System.out.println(r.radius);
 			}
 			
 			//remove resources marked for remove, and check for resources over default value
@@ -160,8 +166,12 @@ public class GenerationTest1 {
 				}
 			}
 			
+			//now we update the labels
+			 poolLabel.setText(" Resource Pool: " + resourcePool);
+			protoLabel.setText(   "Proto Resource: " + resources.size());
+			resourceLabel.setText("Total Resource: " + gameResources.size());
 			
-			//fifth we draw the frame
+			//next we draw the frame
 			frame.repaint();
 			
 			//let the gameloop pause for a moment before repeated
@@ -185,6 +195,18 @@ public class GenerationTest1 {
 		frame = new JFrame("GenrationTest1");
 		panel = new GamePanel();
 		
+		poolLabel =  new JLabel("Resource  Pool: " + NUM_PROTO);
+		poolLabel.setLocation(10, 10);
+		protoLabel =    new JLabel("\n Proto Resource: " + 0);
+		protoLabel.setLocation(20, 20);
+		resourceLabel = new JLabel("\n Total Resource: " + 0);
+		resourceLabel.setLocation(30, 30);
+		
+		
+		
+		panel.add(poolLabel);
+		panel.add(protoLabel);
+		panel.add(resourceLabel);
 		
 		frame.setSize(1200,  900);
 		frame.setVisible(true);
@@ -230,24 +252,8 @@ public class GenerationTest1 {
 		
 		@Override
 	    public void mouseClicked(MouseEvent e) {
-	        // TODO Auto-generated method stub
-	        double x = e.getX();
-	        double y = e.getY();
-	        System.out.println("mouse clicked");
-	        
-	        //check to see if this x, y value intersects any of the gameResources
-	        for(int i = 0; i < gameResources.size(); i++){
-	        	ProtoResource r = gameResources.get(i);
-	        	if(x >= r.location.x && x < r.location.x + r.mass*MASS_SIZE_RATIO
-	        	   && y >= r.location.y && y < r.location.y + r.mass*MASS_SIZE_RATIO){
-	        		//this is a mouse collision. remove the resource and add it's mass to the pool
-	        		gameResources.remove(i);
-	        		resourcePool += r.mass;
-	        		System.out.println("Match");
-	        	}else{
-	        		System.out.println("NOMATCH");
-	        	}
-	        }
+			  // TODO Auto-generated method stub
+	       
 
 	    }   
 
@@ -264,8 +270,25 @@ public class GenerationTest1 {
 	    }
 
 	    @Override
-	    public void mousePressed(MouseEvent arg0) {
+	    public void mousePressed(MouseEvent e) {
 	        // TODO Auto-generated method stub
+	    	 double x = e.getX();
+		        double y = e.getY();
+		        System.out.println("mouse clicked");
+		        
+		        //check to see if this x, y value intersects any of the gameResources
+		        for(int i = 0; i < gameResources.size(); i++){
+		        	ProtoResource r = gameResources.get(i);
+		        	if(x >= r.location.x && x < r.location.x + r.radius
+		        	   && y >= r.location.y && y < r.location.y + r.radius){
+		        		//this is a mouse collision. remove the resource and add it's mass to the pool
+		        		gameResources.remove(i);
+		        		resourcePool += r.mass;
+		        		System.out.println("Match");
+		        	}else{
+		        		System.out.println("NOMATCH");
+		        	}
+		        }
 
 	    }
 
@@ -288,6 +311,7 @@ public class GenerationTest1 {
 		Vector2D location;
 		Vector2D velocity;
 		int mass;
+		double radius;
 		
 		public ProtoResource(double x, double y, int mass){
 			remove = false;
@@ -301,13 +325,13 @@ public class GenerationTest1 {
 			g.setColor(c);
 			//g.fillOval((int)location.x, (int)location.y, (int)(mass*MASS_SIZE_RATIO*4), (int)(mass*MASS_SIZE_RATIO*4));
 			//g.setColor(Color.blue);
-			g.fillOval((int)location.x, (int)location.y, (int)(mass*MASS_SIZE_RATIO), (int)(mass*MASS_SIZE_RATIO));
+			g.fillOval((int)location.x, (int)location.y, (int)(radius), (int)(radius));
 		}
 		
 		public boolean collides(ProtoResource r){
 			boolean returnVal;
-			if(location.x >= r.location.x && location.x <= r.location.x + r.mass*MASS_SIZE_RATIO
-			   && location.y >= r.location.y && location.y <= r.location.y + r.mass*MASS_SIZE_RATIO){
+			if(location.x >= r.location.x && location.x <= r.location.x + r.radius
+			   && location.y >= r.location.y && location.y <= r.location.y + r.radius){
 				returnVal = true;
 			}else{
 				returnVal = false;
