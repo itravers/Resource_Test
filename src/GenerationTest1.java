@@ -5,7 +5,8 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Vector;
-
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -31,15 +32,23 @@ public class GenerationTest1 {
 	//Graphics varibales
 	private JFrame frame;
 	private GamePanel panel;
+	private JLabel poolLabel;
+	private JLabel protoLabel;
+	private JLabel resourceLabel;
 	
 	//Game Pieces
 	private int resourcePool;
 	private ArrayList<ProtoResource> resources;
+	private ArrayList<ProtoResource> gameResources;
 	private boolean inGame;
 	private Random random;
 	
+	
 	//Constants
 	private double g = 20; // The Acceleration of Gravity
+	private int NUM_PROTO = 100;
+	private double MASS_SIZE_RATIO = 2;
+	private double MASS_THRESHOLD = NUM_PROTO / 20;
 	
 	GenerationTest1(){
 		setupGraphics();
@@ -102,24 +111,55 @@ public class GenerationTest1 {
 			
 			//Collision Check
 			
-			//fourth we check resources to make sure they're not out of bounds, if they are, we move them
+			//fifth we check resources to make sure they're not out of bounds, if they are, we move them
 			//back into bounds and reverse the correct element of velocity to make them bounce.
 			for(ProtoResource r : resources){
-				if(r.location.x > panel.getWidth()){ //off right bounds
-					r.location.x = panel.getWidth() - 1; //move back in bounds
+				if(r.location.x + r.mass*MASS_SIZE_RATIO > panel.getWidth()){ //off right bounds
+					r.location.x = panel.getWidth() -r.mass*MASS_SIZE_RATIO - 1; //move back in bounds
 					r.velocity.x = -r.velocity.x; //bounce the velocity
 				}else if(r.location.x < 0){ //Off left bounds
 					r.location.x = 1;
 					r.velocity.x = -r.velocity.x;
-				}else if(r.location.y > panel.getHeight()){//Off Bottom of Screen
-					r.location.y = panel.getHeight() - 1;
+				}else if(r.location.y + r.mass*MASS_SIZE_RATIO > panel.getHeight()){//Off Bottom of Screen
+					r.location.y = panel.getHeight() - r.mass*MASS_SIZE_RATIO - 1;
 					r.velocity.y = - r.velocity.y;
 				}else if(r.location.y < 0){//Off top of screen
 					r.location.y = 1;
 					r.velocity.y = -r.velocity.y;
 				}
-				System.out.println(r.velocity);	
+				//System.out.println(r.velocity);	
 			}
+			
+			//sixth We check each proto-resource for collisions with other proto-resources and combine them into one
+			for(ProtoResource r : resources){
+				for(ProtoResource r2 : resources){
+					if(r != r2){
+						if(r.collides(r2)){
+							if(r.mass >= r2.mass){
+								r.mass += r2.mass;
+								r2.remove();
+							}else{
+								r2.mass += r.mass;
+								r.remove();
+							}
+						}
+					}
+				}
+			}
+			
+			//remove resources marked for remove, and check for resources over default value
+			//and turn those into gameResources
+			for(int i = 0; i < resources.size(); i++){
+				if(resources.get(i).remove){
+					resources.remove(i);
+				}else if(resources.get(i).mass >= MASS_THRESHOLD){
+					ProtoResource r = resources.get(i);
+					resources.remove(i);
+					if(!gameResources.contains(r)) gameResources.add(r);
+				
+				}
+			}
+			
 			
 			//fifth we draw the frame
 			frame.repaint();
@@ -135,8 +175,9 @@ public class GenerationTest1 {
 	}
 	
 	private void setupResources(){
-		resourcePool = 100;
+		resourcePool = NUM_PROTO;
 		resources = new ArrayList<ProtoResource>();
+		gameResources = new ArrayList<ProtoResource>();
 		random  = new Random(System.currentTimeMillis());
 	}
 	
@@ -144,22 +185,27 @@ public class GenerationTest1 {
 		frame = new JFrame("GenrationTest1");
 		panel = new GamePanel();
 		
-		frame.setSize(800,  600);
+		
+		frame.setSize(1200,  900);
 		frame.setVisible(true);
 		frame.setLocation(50, 50);
+		frame.setDefaultCloseOperation(frame.EXIT_ON_CLOSE);
 		frame.add(panel);
 		System.out.println("added");
+		
 	}
 	
-	private class GamePanel extends JPanel{
+	private class GamePanel extends JPanel implements MouseListener{
 		public GamePanel(){
-			setPreferredSize(new Dimension(800, 600));
+			addMouseListener(this);
+			setPreferredSize(new Dimension(1200, 900));
 		}
 		
 		@Override
 		public void paintComponent(Graphics g){
 			g.setColor(Color.BLACK);
 			g.fillRect(0, 0, this.getWidth(), this.getHeight()); //draw a blank slate
+			drawGameResources((Graphics2D)g);
 			drawProtoResources((Graphics2D)g);
 		}
 		
@@ -169,12 +215,67 @@ public class GenerationTest1 {
 		 * @param g
 		 */
 		private void drawProtoResources(Graphics2D g){
-			g.setColor(Color.white);
 			for(ProtoResource r : resources){
-				r.draw(g);
+				r.draw(g, Color.white);
 			}
 			
 		}
+		
+		private void drawGameResources(Graphics2D g){
+			g.setColor(Color.green);
+			for(ProtoResource r : gameResources){
+				r.draw(g, Color.green);
+			}
+		}
+		
+		@Override
+	    public void mouseClicked(MouseEvent e) {
+	        // TODO Auto-generated method stub
+	        double x = e.getX();
+	        double y = e.getY();
+	        System.out.println("mouse clicked");
+	        
+	        //check to see if this x, y value intersects any of the gameResources
+	        for(int i = 0; i < gameResources.size(); i++){
+	        	ProtoResource r = gameResources.get(i);
+	        	if(x >= r.location.x && x < r.location.x + r.mass*MASS_SIZE_RATIO
+	        	   && y >= r.location.y && y < r.location.y + r.mass*MASS_SIZE_RATIO){
+	        		//this is a mouse collision. remove the resource and add it's mass to the pool
+	        		gameResources.remove(i);
+	        		resourcePool += r.mass;
+	        		System.out.println("Match");
+	        	}else{
+	        		System.out.println("NOMATCH");
+	        	}
+	        }
+
+	    }   
+
+	    @Override
+	    public void mouseEntered(MouseEvent arg0) {
+	        // TODO Auto-generated method stub
+
+	    }
+
+	    @Override
+	    public void mouseExited(MouseEvent arg0) {
+	        // TODO Auto-generated method stub
+
+	    }
+
+	    @Override
+	    public void mousePressed(MouseEvent arg0) {
+	        // TODO Auto-generated method stub
+
+	    }
+
+	    @Override
+	    public void mouseReleased(MouseEvent e) {
+	        // TODO Auto-generated method stub
+
+	    }
+
+	   
 	}
 	
 	/**
@@ -183,19 +284,39 @@ public class GenerationTest1 {
 	 *
 	 */
 	private class ProtoResource{
+		boolean remove;
 		Vector2D location;
 		Vector2D velocity;
 		int mass;
 		
 		public ProtoResource(double x, double y, int mass){
+			remove = false;
 			location = new Vector2D(x, y);
 			velocity = new Vector2D(0, 0);
 			this.mass = mass;
 			
 		}
 		
-		public void draw(Graphics2D g){
-			g.fillOval((int)location.x, (int)location.y, mass*2, mass*2);
+		public void draw(Graphics2D g, Color c){
+			g.setColor(c);
+			//g.fillOval((int)location.x, (int)location.y, (int)(mass*MASS_SIZE_RATIO*4), (int)(mass*MASS_SIZE_RATIO*4));
+			//g.setColor(Color.blue);
+			g.fillOval((int)location.x, (int)location.y, (int)(mass*MASS_SIZE_RATIO), (int)(mass*MASS_SIZE_RATIO));
+		}
+		
+		public boolean collides(ProtoResource r){
+			boolean returnVal;
+			if(location.x >= r.location.x && location.x <= r.location.x + r.mass*MASS_SIZE_RATIO
+			   && location.y >= r.location.y && location.y <= r.location.y + r.mass*MASS_SIZE_RATIO){
+				returnVal = true;
+			}else{
+				returnVal = false;
+			}
+			return returnVal;
+		}
+		
+		public void remove(){
+			remove = true;
 		}
 	}
 }
