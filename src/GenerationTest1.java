@@ -3,6 +3,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Vector;
 
 import javax.swing.JFrame;
@@ -32,9 +33,10 @@ public class GenerationTest1 {
 	private GamePanel panel;
 	
 	//Game Pieces
-	int resourcePool;
-	ArrayList<ProtoResource> resources;
-	boolean inGame;
+	private int resourcePool;
+	private ArrayList<ProtoResource> resources;
+	private boolean inGame;
+	private Random random;
 	
 	GenerationTest1(){
 		setupGraphics();
@@ -50,7 +52,10 @@ public class GenerationTest1 {
 		//worry about location, mass, and velocity calucations here
 		while(inGame){
 			//first we will see if we should add another resource from the pool
-			
+			if(resourcePool > 0){
+				resources.add(new ProtoResource(random.nextDouble()*frame.getWidth(), random.nextDouble()*frame.getHeight(), 1));
+				resourcePool--;
+			}
 			//second we apply gravity to the velocity of each proto resource
 			
 			//third we update the location of each proto resource
@@ -64,6 +69,7 @@ public class GenerationTest1 {
 	private void setupResources(){
 		resourcePool = 1000;
 		resources = new ArrayList<ProtoResource>();
+		random  = new Random(System.currentTimeMillis());
 	}
 	
 	private void setupGraphics(){
