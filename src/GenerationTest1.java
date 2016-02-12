@@ -39,13 +39,13 @@ public class GenerationTest1 {
 	private Random random;
 	
 	//Constants
-	private double g = 5; // The Acceleration of Gravity
+	private double g = 20; // The Acceleration of Gravity
 	
 	GenerationTest1(){
 		setupGraphics();
 		setupResources();
 		//test first resource
-		resources.add(new ProtoResource( 10, 10, 2));
+		//resources.add(new ProtoResource( 10, 10, 2));
 		inGame = true;
 		gameLoop();
 	}
@@ -86,7 +86,15 @@ public class GenerationTest1 {
 				Vector2D accel = force.scalarMult(1/r.mass);
 				
 				//third we update the velocity of each proto resource based on acceleration
+				//we limit it
+				
+				//r.velocity = r.velocity.scalarMult(elapsedTime/1000 / .9f);
 				r.velocity = r.velocity.plus(accel);
+				if(r.velocity.length() > 5){
+					r.velocity = r.velocity.scalarMult(.5f);
+				}
+				
+				
 				
 				//forth we update the location based on velocity
 				r.location = r.location.plus(r.velocity);
@@ -127,7 +135,7 @@ public class GenerationTest1 {
 	}
 	
 	private void setupResources(){
-		resourcePool = 1000;
+		resourcePool = 100;
 		resources = new ArrayList<ProtoResource>();
 		random  = new Random(System.currentTimeMillis());
 	}
