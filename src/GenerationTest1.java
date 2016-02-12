@@ -38,6 +38,9 @@ public class GenerationTest1 {
 	private boolean inGame;
 	private Random random;
 	
+	//Constants
+	private double g = 5; // The Acceleration of Gravity
+	
 	GenerationTest1(){
 		setupGraphics();
 		setupResources();
@@ -48,21 +51,62 @@ public class GenerationTest1 {
 	}
 	
 	private void gameLoop(){
-		//java swing will automaticall take care of drawing, we only have to
 		//worry about location, mass, and velocity calucations here
+		long startTime = System.currentTimeMillis();
+		long elapsedTime;
 		while(inGame){
+			//figure out the elaspedTime we will be using for this frame.
+			long currentTime = System.currentTimeMillis();
+			elapsedTime = currentTime - startTime;
+			startTime = currentTime;
 			//first we will see if we should add another resource from the pool
 			if(resourcePool > 0){
 				resources.add(new ProtoResource(random.nextDouble()*frame.getWidth(), random.nextDouble()*frame.getHeight(), 1));
 				resourcePool--;
 			}
-			//second we apply gravity to the velocity of each proto resource
 			
-			//third we update the location of each proto resource
+			//second we apply gravity to the velocity of each proto resource O(x^2)
+			for(ProtoResource r : resources){
+				Vector2D force = new Vector2D(0, 0);
+				for(ProtoResource r2 : resources){
+					if(r != r2){ //we don't apply gravity for ourself
+						double mass1 = r.mass;
+						double mass2 = r2.mass;
+						double distanceSQ = r.location.distanceSq(r2.location);
+						double distance = r.location.distance(r2.location);
+						Vector2D preforce = new Vector2D(0, 0);
+						preforce = r2.location.minus(r.location);
+						preforce = preforce.scalarMult(g * mass1 * mass2);
+						preforce = preforce.scalarMult((1/distanceSQ));
+						force = force.plus(preforce);
+					}
+				}
+				
+				//calculate the new acceleration based on force
+				Vector2D accel = force.scalarMult(1/r.mass);
+				
+				//third we update the velocity of each proto resource based on acceleration
+				r.velocity = r.velocity.plus(accel);
+				
+				//forth we update the location based on velocity
+				r.location = r.location.plus(r.velocity);
+				
+			}
+			
+			
 			
 			//fourth we combine colliding proto resources
 			
+			//fifth we draw the frame
+			frame.repaint();
+			
 			//let the gameloop pause for a moment before repeated
+			try {
+				Thread.sleep(33);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
