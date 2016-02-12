@@ -47,9 +47,9 @@ public class GenerationTest1 {
 	
 	//Constants
 	private double g = .5f; // The Acceleration of Gravity
-	private int NUM_PROTO = 1000;
+	private int NUM_PROTO = 10000;
 	private double MASS_SIZE_RATIO = 4;
-	private double MASS_THRESHOLD = NUM_PROTO / 20;
+	private double MASS_THRESHOLD = NUM_PROTO / 40;
 	
 	GenerationTest1(){
 		setupGraphics();
