@@ -80,6 +80,36 @@ public class GenerationTest1 {
 				
 			}
 			
+			//sixth We check each proto-resource for collisions with other proto-resources and combine them into one
+			for(ProtoResource r : resources){
+				for(ProtoResource r2 : resources){
+					if(r != r2){
+						if(r.collides(r2)){
+							if(r.mass >= r2.mass){
+								//combine momentums Momentum = Velocity * Mass //Figure out new velocity from momentum
+								Vector2D momentum1 = r.velocity.scalarMult(r.mass);
+								Vector2D momentum2 = r2.velocity.scalarMult(r2.mass);
+								r.velocity = momentum1.plus(momentum2).scalarMult(1/(r.mass + r2.mass));
+								r.mass += r2.mass; //combine masses of two resources
+								r2.remove();
+							}else{
+								//combine momentums Momentum = Velocity * Mass //Figure out new velocity from momentum
+								Vector2D momentum1 = r2.velocity.scalarMult(r2.mass);
+								Vector2D momentum2 = r.velocity.scalarMult(r.mass);
+								r2.velocity = momentum1.plus(momentum2).scalarMult(1/(r2.mass + r.mass));
+								r2.mass += r.mass; //combine masses of two resources
+								r.remove();
+							}
+						}
+					}
+				}
+				
+				//update radius based on mass as a volume
+				r.radius = Math.sqrt(r.mass/Math.PI) * MASS_SIZE_RATIO;
+				
+				System.out.println(r.radius);
+			}
+			
 			//second we apply gravity to the velocity of each proto resource O(x^2)
 			for(ProtoResource r : resources){
 				Vector2D force = new Vector2D(0, 0);
@@ -140,27 +170,7 @@ public class GenerationTest1 {
 				//System.out.println(r.velocity);	
 			}
 			
-			//sixth We check each proto-resource for collisions with other proto-resources and combine them into one
-			for(ProtoResource r : resources){
-				for(ProtoResource r2 : resources){
-					if(r != r2){
-						if(r.collides(r2)){
-							if(r.mass >= r2.mass){
-								r.mass += r2.mass;
-								r2.remove();
-							}else{
-								r2.mass += r.mass;
-								r.remove();
-							}
-						}
-					}
-				}
-				
-				//update radius based on mass as a volume
-				r.radius = Math.sqrt(r.mass/Math.PI) * MASS_SIZE_RATIO;
-				
-				System.out.println(r.radius);
-			}
+			
 			
 			//remove resources marked for remove, and check for resources over default value
 			//and turn those into gameResources
